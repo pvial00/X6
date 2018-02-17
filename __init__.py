@@ -75,6 +75,25 @@ def hfunc2(block, mod=26):
    block[15] = (block[7] + block[3] + 0) % mod
    return block
 
+def hfunc3(block, mod=26):
+   block[0] = (block[5] + block[12]) % mod
+   block[1] = (block[2] + block[4]) % mod
+   block[2] = (block[12] + block[2]) % mod
+   block[3] = (block[8] + block[9]) % mod
+   block[4] = (block[11] + block[15]) % mod
+   block[5] = (block[4] + block[6]) % mod
+   block[6] = (block[7] + block[3]) % mod
+   block[7] = (block[1] + block[7]) % mod
+   block[8] = (block[15] + block[11]) % mod
+   block[9] = (block[0] + block[13]) % mod
+   block[10] = (block[14] + block[1]) % mod
+   block[11] = (block[6] + block[7]) % mod
+   block[12] = (block[9] + block[14]) % mod
+   block[13] = (block[3] + block[0]) % mod
+   block[14] = (block[10] + block[8]) % mod
+   block[15] = (block[7] + block[10]) % mod
+   return block
+
 def keysetup(key, nonce, blocksize=16, keyrounds=128):
    h = []
    n = []
@@ -108,6 +127,8 @@ class X6:
       h = keysetup(self.key, nonce)
       for x, block in enumerate(blocks):
          h = hfunc(h)
+         h = hfunc2(h)
+         h = hfunc3(h)
          for c, char in enumerate(block):
              ctxt.append(chr(((h[c] + char + x) % 26) + 65))
       return "".join(ctxt)
@@ -118,6 +139,8 @@ class X6:
       h = keysetup(self.key, nonce)
       for x, block in enumerate(blocks):
          h = hfunc(h)
+         h = hfunc2(h)
+         h = hfunc3(h)
          for c, char in enumerate(block):
              ctxt.append(chr(((char - h[c] - x) % self.mod) + 65))
       return "".join(ctxt)
