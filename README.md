@@ -6,4 +6,4 @@ X6(key).encrypt(data, nonce)
 X6(key).decrypt(data, nonce)  
 
 # Script usage:
-python x6crypt.py <encrypt/decrypt> <input file> <output file> <key>
+python x6crypt.py encrypt/decrypt input file output file key
