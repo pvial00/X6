@@ -1,4 +1,4 @@
-keyinit = "AKEYISNOTFIREYEZ"
+keyinit = "MYVOICECANSINGTO"
 
 def charstonum(chars):
     nums = []
@@ -36,46 +36,27 @@ def blockdata(data, padding=False, blocksize=16):
       s += blocksize
       e += blocksize
    return blocks
-   
-def hfunc(block, mod=26):
-   block[0] = (block[0] + block[2] + 12) % mod
-   block[1] = (block[1] + block[14] + 4) % mod
-   block[2] = (block[2] + block[5] + 13) % mod
-   block[3] = (block[3] + block[8] + 21) % mod
-   block[4] = (block[4] + block[1] + 16) % mod
-   block[5] = (block[5] + block[9] + 2) % mod
-   block[6] = (block[6] + block[0] + 9) % mod
-   block[7] = (block[7] + block[15] + 25) % mod
-   block[8] = (block[8] + block[4] + 20) % mod
-   block[9] = (block[9] + block[6] + 5) % mod
-   block[10] = (block[10] + block[7] + 22) % mod
-   block[11] = (block[11] + block[13] + 3) % mod
-   block[12] = (block[12] + block[12] + 11) % mod
-   block[13] = (block[13] + block[10] + 1) % mod
-   block[14] = (block[14] + block[11] + 17) % mod
-   block[15] = (block[15] + block[3] + 6) % mod
+
+def hfunc(block, counter=0,  mod=26):
+   block[0] = (block[2] + block[1] + block[4] + 14) % mod
+   block[1] = (block[0] + block[12] + block[14] + 5) % mod
+   block[2] = (block[1] + block[3] + block[3] + 1) % mod
+   block[3] = (block[6] + block[5] + block[6] + 19) % mod
+   block[4] = (block[7] + block[2] + block[8] + 13) % mod
+   block[5] = (block[12] + block[10] + block[0] + 17) % mod
+   block[6] = (block[5] + block[8] + block[11] + 24) % mod
+   block[7] = (block[13] + block[6] + block[15] + 23) % mod
+   block[8] = (block[15] + block[4] + block[12] + 0) % mod
+   block[9] = (block[9] + block[15] + block[5] + 4) % mod
+   block[10] = (block[14] + block[13] + block[1] + 23) % mod
+   block[11] = (block[3] + block[11] + block[10] + 8) % mod
+   block[12] = (block[4] + block[7] + block[13] + 25 + counter) % mod
+   block[13] = (block[10] + block[0] + block[9] + 20) % mod
+   block[14] = (block[8] + block[14] + block[2] + 15) % mod
+   block[15] = (block[11] + block[9] + block[7] + 7) % mod
    return block
    
 def hfunc2(block, mod=26):
-   block[0] = (block[1] + block[2] + 5) % mod
-   block[1] = (block[13] + block[14] + 22) % mod
-   block[2] = (block[6] + block[5] + 20) % mod
-   block[3] = (block[15] + block[8] + 14) % mod
-   block[4] = (block[5] + block[1] + 11) % mod
-   block[5] = (block[6] + block[9] + 17) % mod
-   block[6] = (block[0] + block[0] + 19) % mod
-   block[7] = (block[11] + block[15] + 20) % mod
-   block[8] = (block[9] + block[4] + 23) % mod
-   block[9] = (block[3] + block[6] + 3) % mod
-   block[10] = (block[12] + block[7] + 9) % mod
-   block[11] = (block[14] + block[13] + 4) % mod
-   block[12] = (block[2] + block[12] + 15) % mod
-   block[13] = (block[10] + block[10] + 7) % mod
-   block[14] = (block[8] + block[11] + 13) % mod
-   block[15] = (block[7] + block[3] + 0) % mod
-   return block
-
-def hfunc3(block, mod=26):
    block[0] = (block[5] + block[12]) % mod
    block[1] = (block[2] + block[4]) % mod
    block[2] = (block[12] + block[2]) % mod
@@ -104,50 +85,45 @@ def keysetup(key, nonce, blocksize=16, keyrounds=128):
    for x, char in enumerate(h):
        h[x] = (char + (ord(keyinit[x]) - 65)) % 26
    for x in range(keyrounds):
-       h = hfunc(h)
+       h  = hfunc(h)
        h = hfunc2(h)
-       n = hfunc(n)
    for x, char in enumerate(n):
        h[x] = (char + h[x]) % 26
    for x in range(keyrounds):
-       h = hfunc(h)
+       h  = hfunc(h)
        h = hfunc2(h)
    return h
 
 class X6:
-   def __init__(self, key):
-      self.key = key
-      self.mod = 26
-      self.blocksize = 16
-      self.keyrounds = 128
 
-   def encrypt(self, data, nonce):
+   def encrypt(self, data, key, nonce):
       blocks = blockdata(data)
       ctxt = []
-      h = keysetup(self.key, nonce)
-      for x, block in enumerate(blocks):
-         h = hfunc(h)
+      h = keysetup(key, nonce)
+      counter = 0
+      for b, block in enumerate(blocks):
+         h = hfunc(h, counter)
          h = hfunc2(h)
-         h = hfunc3(h)
          for c, char in enumerate(block):
-             ctxt.append(chr(((h[c] + char + x) % 26) + 65))
+             ctxt.append(chr(((h[c] + char) % 26) + 65))
+             counter = (counter + 1) % 26
       return "".join(ctxt)
    
-   def decrypt(self, data, nonce):
+   def decrypt(self, data, key, nonce):
       blocks = blockdata(data)
       ctxt = []
-      h = keysetup(self.key, nonce)
-      for x, block in enumerate(blocks):
-         h = hfunc(h)
+      h = keysetup(key, nonce)
+      counter = 0
+      for b, block in enumerate(blocks):
+         h = hfunc(h, counter)
          h = hfunc2(h)
-         h = hfunc3(h)
          for c, char in enumerate(block):
-             ctxt.append(chr(((char - h[c] - x) % self.mod) + 65))
+             ctxt.append(chr(((char - h[c]) % 26) + 65))
+             counter = (counter + 1) % 26
       return "".join(ctxt)
 
 class X6Hash:
   blocksize = 16
-  mod = 26
   rounds = 1
 
   def digest(self, data, key=""):
@@ -159,7 +135,7 @@ class X6Hash:
               h = hfunc(block)
               h = hfunc2(h)
               for c, char in enumerate(last):
-                  h[c] = (h[c] + char + c) % self.mod
+                  h[c] = (h[c] + char + c) % 26
           blockhashes.append(h)
           last = h
       for block in blockhashes:
@@ -167,3 +143,13 @@ class X6Hash:
               h[c] = (char + h[c]) % 26
       h = keysetup(numstochars(h), numstochars(last))
       return "".join(numstochars(h))
+
+class X6KDF:
+    def __init__(self, iterations=100):
+        self.iterations = iterations
+
+    def genkey(self, key):
+        h = key
+        for i in range(self.iterations):
+            h = X6Hash().digest(h)
+        return h

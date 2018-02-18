@@ -1,5 +1,5 @@
 from pycube import CubeKDF, DataNormalizer, CubeRandom
-from X6 import X6
+from X6 import X6, X6KDF
 import sys, select, getpass, os, time, getopt
 
 try:
@@ -30,19 +30,18 @@ except IndexError as ier:
 
 start = time.time()
 buf = infile.read()
-#data = buf.strip('\n')
 infile.close()
-key = CubeKDF(16).genkey(key)
+key = X6KDF().genkey(key)
 data = DataNormalizer().normalize(buf)
 
 if mode == "encrypt":
     nonce = CubeRandom().random(16)
-    c = X6(key).encrypt(data, nonce)
+    c = X6().encrypt(data, key, nonce)
     outfile.write(nonce+c)
 elif mode == "decrypt":
     nonce = data[:16]
     msg = data[16:]
-    plain_text = X6(key).decrypt(msg, nonce)
+    plain_text = X6().decrypt(msg, key, nonce)
     outfile.write(plain_text)
 outfile.close()
 
